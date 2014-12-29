@@ -24,6 +24,7 @@
 #define BUTTON_SPACE (BUTTON_RADIUS + 5)
 #define BUTTON_CENTER (BUTTON_RADIUS + 5)
 #define BUTTON_DIAMETER (2 * BUTTON_SPACE)
+#define INFO_TIME_FORMAT "%l:%M%p"
 
 /*******************************************************************************
  * Variables defined in i3lock.c.
@@ -136,10 +137,10 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         cairo_fill(xcb_ctx);
     }
 
-    if (unlock_state >= STATE_KEY_PRESSED && unlock_indicator) {
+    if (unlock_indicator) {
         cairo_scale(ctx, scaling_factor(), scaling_factor());
         /* Draw a (centered) circle with transparent background. */
-        cairo_set_line_width(ctx, 10.0);
+        cairo_set_line_width(ctx, 3.0);
         cairo_arc(ctx,
                   BUTTON_CENTER /* x */,
                   BUTTON_CENTER /* y */,
@@ -154,10 +155,10 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                 cairo_set_source_rgba(ctx, 0, 114.0/255, 255.0/255, 0.75);
                 break;
             case STATE_PAM_WRONG:
-                cairo_set_source_rgba(ctx, 250.0/255, 0, 0, 0.75);
+                cairo_set_source_rgba(ctx, 250.0/255, 0, 0, 0.80);
                 break;
             default:
-                cairo_set_source_rgba(ctx, 0, 0, 0, 0.75);
+                cairo_set_source_rgba(ctx, 0, 0, 0, 0.85);
                 break;
         }
         cairo_fill_preserve(ctx);
@@ -170,7 +171,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                 cairo_set_source_rgb(ctx, 125.0/255, 51.0/255, 0);
                 break;
             case STATE_PAM_IDLE:
-                cairo_set_source_rgb(ctx, 51.0/255, 125.0/255, 0);
+                cairo_set_source_rgba(ctx, 1, 1, 1, 0.75);
                 break;
         }
         cairo_stroke(ctx);
@@ -186,7 +187,24 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                   2 * M_PI);
         cairo_stroke(ctx);
 
-        cairo_set_line_width(ctx, 10.0);
+        cairo_set_line_width(ctx, 3.0);
+
+        /* Display (centered) Time */
+        char *timetext = malloc(6);
+        time_t curtime = time(NULL);
+        struct tm *tm = localtime(&curtime);
+        strftime(timetext, 100, INFO_TIME_FORMAT, tm);
+        cairo_set_source_rgb(ctx, 255, 255, 255);
+        cairo_set_font_size(ctx, 32.0);
+        cairo_text_extents_t time_extents;
+        double time_x, time_y;
+        cairo_text_extents(ctx, timetext, &time_extents);
+        time_x = BUTTON_CENTER - ((time_extents.width / 2) + time_extents.x_bearing);
+        time_y = BUTTON_CENTER - ((time_extents.height / 2) + time_extents.y_bearing);
+        cairo_move_to(ctx, time_x, time_y);
+        cairo_show_text(ctx, timetext);
+        cairo_close_path(ctx);
+        free(timetext);
 
         /* Display a (centered) text of the current PAM state. */
         char *text = NULL;
@@ -197,10 +215,10 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         cairo_set_font_size(ctx, 28.0);
         switch (pam_state) {
             case STATE_PAM_VERIFY:
-                text = "verifying…";
+                text = "";
                 break;
             case STATE_PAM_WRONG:
-                text = "wrong!";
+                text = "Wrong.";
                 break;
             default:
                 if (show_failed_attempts && failed_attempts > 0){
@@ -313,13 +331,10 @@ void redraw_screen(void) {
 }
 
 /*
- * Hides the unlock indicator completely when there is no content in the
- * password buffer.
+ * Always show unlock indicator.
  *
  */
 void clear_indicator(void) {
-    if (input_position == 0) {
-        unlock_state = STATE_STARTED;
-    } else unlock_state = STATE_KEY_PRESSED;
+    unlock_state = STATE_KEY_PRESSED;
     redraw_screen();
 }
