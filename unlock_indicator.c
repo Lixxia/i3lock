@@ -14,6 +14,7 @@
 #include <ev.h>
 #include <cairo.h>
 #include <cairo/cairo-xcb.h>
+#include <time.h>
 
 #include "i3lock.h"
 #include "xcb.h"
@@ -29,6 +30,7 @@
 /*******************************************************************************
  * Variables defined in i3lock.c.
  ******************************************************************************/
+static struct ev_periodic *time_redraw_tick;
 
 extern bool debug_mode;
 
@@ -337,4 +339,24 @@ void redraw_screen(void) {
 void clear_indicator(void) {
     unlock_state = STATE_KEY_PRESSED;
     redraw_screen();
+}
+
+/* Periodic redraw for clock - taken from github.com/ravinrabbid/i3lock-clock */
+
+static void time_redraw_cb(struct ev_loop *loop, ev_periodic *w, int revents) {
+    redraw_screen();
+}
+
+void start_time_redraw_tick(struct ev_loop* main_loop) {
+    if (time_redraw_tick) {
+        ev_periodic_set(time_redraw_tick, 1.0, 60., 0);
+        ev_periodic_again(main_loop, time_redraw_tick);
+    } else {
+        /* When there is no memory, we just don’t have a timeout. We cannot
+        * exit() here, since that would effectively unlock the screen. */
+        if (!(time_redraw_tick = calloc(sizeof(struct ev_periodic), 1)))
+        return;
+        ev_periodic_init(time_redraw_tick,time_redraw_cb, 1.0, 60., 0);
+        ev_periodic_start(main_loop, time_redraw_tick);
+    }
 }

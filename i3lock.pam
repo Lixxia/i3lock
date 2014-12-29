@@ -3,4 +3,5 @@
 # the 'login' configuration file (see /etc/pam.d/login)
 #
 
-auth include login
+auth required    pam_env.so
+auth sufficient  pam_unix.so try_first_pass likeauth nullok
