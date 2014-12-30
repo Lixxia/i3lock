@@ -25,7 +25,7 @@
 #define BUTTON_SPACE (BUTTON_RADIUS + 5)
 #define BUTTON_CENTER (BUTTON_RADIUS + 5)
 #define BUTTON_DIAMETER (2 * BUTTON_SPACE)
-#define INFO_TIME_FORMAT "%l:%M%p"
+#define TIME_FORMAT "%l:%M%p"
 
 /*******************************************************************************
  * Variables defined in i3lock.c.
@@ -154,10 +154,10 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
          * (currently verifying, wrong password, or default) */
         switch (pam_state) {
             case STATE_PAM_VERIFY:
-                cairo_set_source_rgba(ctx, 0, 114.0/255, 255.0/255, 0.75);
+                cairo_set_source_rgba(ctx, 0, 114.0/255, 255.0/255, 1);
                 break;
             case STATE_PAM_WRONG:
-                cairo_set_source_rgba(ctx, 250.0/255, 0, 0, 0.80);
+                cairo_set_source_rgba(ctx, 250.0/255, 0, 0, 1);
                 break;
             default:
                 cairo_set_source_rgba(ctx, 0, 0, 0, 0.85);
@@ -193,19 +193,25 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
 
         /* Display (centered) Time */
         char *timetext = malloc(6);
+
         time_t curtime = time(NULL);
         struct tm *tm = localtime(&curtime);
-        strftime(timetext, 100, INFO_TIME_FORMAT, tm);
+        strftime(timetext, 100, TIME_FORMAT, tm);
+
         cairo_set_source_rgb(ctx, 255, 255, 255);
         cairo_set_font_size(ctx, 32.0);
+
         cairo_text_extents_t time_extents;
         double time_x, time_y;
+
         cairo_text_extents(ctx, timetext, &time_extents);
         time_x = BUTTON_CENTER - ((time_extents.width / 2) + time_extents.x_bearing);
         time_y = BUTTON_CENTER - ((time_extents.height / 2) + time_extents.y_bearing);
+
         cairo_move_to(ctx, time_x, time_y);
         cairo_show_text(ctx, timetext);
         cairo_close_path(ctx);
+
         free(timetext);
 
         /* Display a (centered) text of the current PAM state. */
@@ -264,10 +270,10 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                       highlight_start + (M_PI / 3.0));
             if (unlock_state == STATE_KEY_ACTIVE) {
                 /* For normal keys, we use a lighter green. */
-                cairo_set_source_rgb(ctx, 51.0/255, 219.0/255, 0);
+                cairo_set_source_rgb(ctx, 170.0/255, 199.0/255, 149.0/255);
             } else {
                 /* For backspace, we use red. */
-                cairo_set_source_rgb(ctx, 219.0/255, 51.0/255, 0);
+                cairo_set_source_rgb(ctx, 204.0/255, 0, 0);
             }
             cairo_stroke(ctx);
 
