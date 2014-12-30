@@ -226,7 +226,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                 text = "";
                 break;
             case STATE_PAM_WRONG:
-                text = "Wrong.";
+                text = "";
                 break;
             default:
                 if (show_failed_attempts && failed_attempts > 0){
