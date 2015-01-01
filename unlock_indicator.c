@@ -152,16 +152,17 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
 
         /* Use the appropriate color for the different PAM states
          * (currently verifying, wrong password, or default) */
+
         /* Circle fill */
         switch (pam_state) {
             case STATE_PAM_VERIFY:
-                cairo_set_source_rgba(ctx, 183.0/255, 199.0/255, 149.0/255, 1);
+                cairo_set_source_rgba(ctx, 183.0/255, 199.0/255, 149.0/255, 0.2);
                 break;
             case STATE_PAM_WRONG:
-                cairo_set_source_rgba(ctx, 250.0/255, 0, 0, 1);
+                cairo_set_source_rgba(ctx, 173.0/255, 23.0/255, 23.0/255, 0.2);
                 break;
             default:
-                cairo_set_source_rgba(ctx, 0, 0, 0, 0.2);
+                cairo_set_source_rgba(ctx, 0, 0, 0, 0.1);
                 break;
         }
         cairo_fill_preserve(ctx);
@@ -169,10 +170,10 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         /* Circle border */
         switch (pam_state) {
             case STATE_PAM_VERIFY:
-                cairo_set_source_rgba(ctx, 209.0/255, 219.0/255, 188.0/255, 0.5);
+                cairo_set_source_rgba(ctx, 209.0/255, 219.0/255, 188.0/255, 0.75);
                 break;
             case STATE_PAM_WRONG:
-                cairo_set_source_rgb(ctx, 125.0/255, 51.0/255, 0);
+                cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.75);
                 break;
             case STATE_PAM_IDLE:
                 cairo_set_source_rgba(ctx, 1, 1, 1, 0.75);
@@ -187,7 +188,17 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         struct tm *tm = localtime(&curtime);
         strftime(timetext, 100, TIME_FORMAT, tm);
 
-        cairo_set_source_rgb(ctx, 1, 1, 1);
+        switch (pam_state) {
+            case STATE_PAM_VERIFY:
+                cairo_set_source_rgba(ctx, 209.0/255, 219.0/255, 188.0/255, 0.75);
+                break;
+            case STATE_PAM_WRONG:
+                cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.75);
+                break;
+            case STATE_PAM_IDLE:
+                cairo_set_source_rgba(ctx, 1, 1, 1, 0.75);
+                break;
+        }
         cairo_set_font_size(ctx, 32.0);
 
         cairo_text_extents_t time_extents;
@@ -208,6 +219,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
          * keypress. */
         if (unlock_state == STATE_KEY_ACTIVE ||
             unlock_state == STATE_BACKSPACE_ACTIVE) {
+            cairo_set_line_width(ctx, 3.5);
             cairo_new_sub_path(ctx);
             double highlight_start = (rand() % (int)(2 * M_PI * 100)) / 100.0;
             cairo_arc(ctx,
@@ -217,30 +229,12 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                       highlight_start,
                       highlight_start + (M_PI / 3.0));
             if (unlock_state == STATE_KEY_ACTIVE) {
-                /* Normal Keys (transparent black) */
-                cairo_set_source_rgba(ctx, 0, 0, 0, 0.7);
+                /* Normal Keys (dark blue) */
+                cairo_set_source_rgba(ctx, 39.0/255, 46.0/255, 64.0/255, 0.9);
             } else {
                 /* Backspace + Escape (red) */
-                cairo_set_source_rgb(ctx, 204.0/255, 0, 0);
+                cairo_set_source_rgba(ctx, 173.0/255, 23.0/255, 23.0/255, 0.75);
             }
-            cairo_stroke(ctx);
-
-            /* Draw two little separators for the highlighted part of the
-             * unlock indicator. */
-            cairo_set_source_rgb(ctx, 0, 0, 0);
-            cairo_arc(ctx,
-                      BUTTON_CENTER /* x */,
-                      BUTTON_CENTER /* y */,
-                      BUTTON_RADIUS /* radius */,
-                      highlight_start /* start */,
-                      highlight_start + (M_PI / 128.0) /* end */);
-            cairo_stroke(ctx);
-            cairo_arc(ctx,
-                      BUTTON_CENTER /* x */,
-                      BUTTON_CENTER /* y */,
-                      BUTTON_RADIUS /* radius */,
-                      highlight_start + (M_PI / 3.0) /* start */,
-                      (highlight_start + (M_PI / 3.0)) + (M_PI / 128.0) /* end */);
             cairo_stroke(ctx);
         }
     }
