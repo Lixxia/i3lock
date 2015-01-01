@@ -152,22 +152,24 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
 
         /* Use the appropriate color for the different PAM states
          * (currently verifying, wrong password, or default) */
+        /* Circle fill */
         switch (pam_state) {
             case STATE_PAM_VERIFY:
-                cairo_set_source_rgba(ctx, 0, 114.0/255, 255.0/255, 1);
+                cairo_set_source_rgba(ctx, 183.0/255, 199.0/255, 149.0/255, 1);
                 break;
             case STATE_PAM_WRONG:
                 cairo_set_source_rgba(ctx, 250.0/255, 0, 0, 1);
                 break;
             default:
-                cairo_set_source_rgba(ctx, 0, 0, 0, 0.85);
+                cairo_set_source_rgba(ctx, 0, 0, 0, 0.2);
                 break;
         }
         cairo_fill_preserve(ctx);
 
+        /* Circle border */
         switch (pam_state) {
             case STATE_PAM_VERIFY:
-                cairo_set_source_rgb(ctx, 51.0/255, 0, 250.0/255);
+                cairo_set_source_rgba(ctx, 209.0/255, 219.0/255, 188.0/255, 0.5);
                 break;
             case STATE_PAM_WRONG:
                 cairo_set_source_rgb(ctx, 125.0/255, 51.0/255, 0);
@@ -178,19 +180,6 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         }
         cairo_stroke(ctx);
 
-        /* Draw an inner seperator line. */
-        cairo_set_source_rgb(ctx, 0, 0, 0);
-        cairo_set_line_width(ctx, 2.0);
-        cairo_arc(ctx,
-                  BUTTON_CENTER /* x */,
-                  BUTTON_CENTER /* y */,
-                  BUTTON_RADIUS - 5 /* radius */,
-                  0,
-                  2 * M_PI);
-        cairo_stroke(ctx);
-
-        cairo_set_line_width(ctx, 3.0);
-
         /* Display (centered) Time */
         char *timetext = malloc(6);
 
@@ -198,7 +187,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         struct tm *tm = localtime(&curtime);
         strftime(timetext, 100, TIME_FORMAT, tm);
 
-        cairo_set_source_rgb(ctx, 255, 255, 255);
+        cairo_set_source_rgb(ctx, 1, 1, 1);
         cairo_set_font_size(ctx, 32.0);
 
         cairo_text_extents_t time_extents;
@@ -214,47 +203,6 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
 
         free(timetext);
 
-        /* Display a (centered) text of the current PAM state. */
-        char *text = NULL;
-        /* We don't want to show more than a 3-digit number. */
-        char buf[4];
-
-        cairo_set_source_rgb(ctx, 0, 0, 0);
-        cairo_set_font_size(ctx, 28.0);
-        switch (pam_state) {
-            case STATE_PAM_VERIFY:
-                text = "";
-                break;
-            case STATE_PAM_WRONG:
-                text = "";
-                break;
-            default:
-                if (show_failed_attempts && failed_attempts > 0){
-                    if (failed_attempts > 999) {
-                        text = "> 999";
-                    } else {
-                        snprintf(buf, sizeof(buf), "%d", failed_attempts);
-                        text = buf;
-                    }
-                    cairo_set_source_rgb(ctx, 1, 0, 0);
-                    cairo_set_font_size(ctx, 32.0);
-                }
-                break;
-        }
-
-        if (text) {
-            cairo_text_extents_t extents;
-            double x, y;
-
-            cairo_text_extents(ctx, text, &extents);
-            x = BUTTON_CENTER - ((extents.width / 2) + extents.x_bearing);
-            y = BUTTON_CENTER - ((extents.height / 2) + extents.y_bearing);
-
-            cairo_move_to(ctx, x, y);
-            cairo_show_text(ctx, text);
-            cairo_close_path(ctx);
-        }
-
         /* After the user pressed any valid key or the backspace key, we
          * highlight a random part of the unlock indicator to confirm this
          * keypress. */
@@ -269,10 +217,10 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                       highlight_start,
                       highlight_start + (M_PI / 3.0));
             if (unlock_state == STATE_KEY_ACTIVE) {
-                /* For normal keys, we use a lighter green. */
-                cairo_set_source_rgb(ctx, 170.0/255, 199.0/255, 149.0/255);
+                /* Normal Keys (transparent black) */
+                cairo_set_source_rgba(ctx, 0, 0, 0, 0.7);
             } else {
-                /* For backspace, we use red. */
+                /* Backspace + Escape (red) */
                 cairo_set_source_rgb(ctx, 204.0/255, 0, 0);
             }
             cairo_stroke(ctx);
@@ -340,14 +288,13 @@ void redraw_screen(void) {
 
 /*
  * Always show unlock indicator.
- *
  */
 void clear_indicator(void) {
     unlock_state = STATE_KEY_PRESSED;
     redraw_screen();
 }
 
-/* Periodic redraw for clock - taken from github.com/ravinrabbid/i3lock-clock */
+/* Periodic redraw for clock updates - taken from github.com/ravinrabbid/i3lock-clock */
 
 static void time_redraw_cb(struct ev_loop *loop, ev_periodic *w, int revents) {
     redraw_screen();
