@@ -219,7 +219,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
          * keypress. */
         if (unlock_state == STATE_KEY_ACTIVE ||
             unlock_state == STATE_BACKSPACE_ACTIVE) {
-            cairo_set_line_width(ctx, 3.5);
+            cairo_set_line_width(ctx, 4);
             cairo_new_sub_path(ctx);
             double highlight_start = (rand() % (int)(2 * M_PI * 100)) / 100.0;
             cairo_arc(ctx,
@@ -227,10 +227,10 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                       BUTTON_CENTER /* y */,
                       BUTTON_RADIUS /* radius */,
                       highlight_start,
-                      highlight_start + (M_PI / 3.0));
+                      highlight_start + (M_PI / 2.5));
             if (unlock_state == STATE_KEY_ACTIVE) {
-                /* Normal Keys (dark blue) */
-                cairo_set_source_rgba(ctx, 39.0/255, 46.0/255, 64.0/255, 0.9);
+                /* Normal Keys (erases sections) */
+                cairo_set_operator(ctx,CAIRO_OPERATOR_CLEAR);
             } else {
                 /* Backspace + Escape (red) */
                 cairo_set_source_rgba(ctx, 173.0/255, 23.0/255, 23.0/255, 0.75);
