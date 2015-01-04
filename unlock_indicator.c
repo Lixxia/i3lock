@@ -188,6 +188,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         struct tm *tm = localtime(&curtime);
         strftime(timetext, 100, TIME_FORMAT, tm);
 
+        /* Color text, same as border */
         switch (pam_state) {
             case STATE_PAM_VERIFY:
                 cairo_set_source_rgba(ctx, 209.0/255, 219.0/255, 188.0/255, 0.75);
@@ -199,6 +200,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                 cairo_set_source_rgba(ctx, 1, 1, 1, 0.75);
                 break;
         }
+
         cairo_set_font_size(ctx, 32.0);
 
         cairo_text_extents_t time_extents;
@@ -266,10 +268,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
     return bg_pixmap;
 }
 
-/*
- * Calls draw_image on a new pixmap and swaps that with the current pixmap
- *
- */
+/* Calls draw_image on a new pixmap and swaps that with the current pixmap */
 void redraw_screen(void) {
     xcb_pixmap_t bg_pixmap = draw_image(last_resolution);
     xcb_change_window_attributes(conn, win, XCB_CW_BACK_PIXMAP, (uint32_t[1]){ bg_pixmap });
@@ -280,9 +279,8 @@ void redraw_screen(void) {
     xcb_flush(conn);
 }
 
-/*
- * Always show unlock indicator.
- */
+/* Always show unlock indicator. */
+
 void clear_indicator(void) {
     unlock_state = STATE_KEY_PRESSED;
     redraw_screen();
