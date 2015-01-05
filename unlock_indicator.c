@@ -238,6 +238,26 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                 cairo_set_source_rgba(ctx, 173.0/255, 23.0/255, 23.0/255, 0.75);
             }
             cairo_stroke(ctx);
+
+            /* Draw two little separators for the highlighted part of the
+            * unlock indicator. */
+            cairo_set_operator(ctx,CAIRO_OPERATOR_OVER);
+            cairo_set_line_width(ctx, 10);
+            cairo_set_source_rgba(ctx, 1, 1, 1, 0.75);
+            cairo_arc(ctx,
+                BUTTON_CENTER /* x */,
+                BUTTON_CENTER /* y */,
+                BUTTON_RADIUS /* radius */,
+                highlight_start /* start */,
+                highlight_start + (M_PI / 128.0) /* end */);
+            cairo_stroke(ctx);
+            cairo_arc(ctx,
+                BUTTON_CENTER /* x */,
+                BUTTON_CENTER /* y */,
+                BUTTON_RADIUS /* radius */,
+                highlight_start + (M_PI / 2.5) /* start */,
+                (highlight_start + (M_PI / 2.5)) + (M_PI / 128.0) /* end */);
+            cairo_stroke(ctx);
         }
     }
 
