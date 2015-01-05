@@ -156,13 +156,13 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         /* Circle fill */
         switch (pam_state) {
             case STATE_PAM_VERIFY:
-                cairo_set_source_rgba(ctx, 183.0/255, 199.0/255, 149.0/255, 0.2);
+                cairo_set_source_rgba(ctx, 144.0/255, 169.0/255, 89.0/255, 0.2);
                 break;
             case STATE_PAM_WRONG:
-                cairo_set_source_rgba(ctx, 173.0/255, 23.0/255, 23.0/255, 0.2);
+                cairo_set_source_rgba(ctx, 172.0/255, 65.0/255, 66.0/255, 0.2);
                 break;
             default:
-                cairo_set_source_rgba(ctx, 0, 0, 0, 0.1);
+                cairo_set_source_rgba(ctx, 0, 0, 0, 0.2);
                 break;
         }
         cairo_fill_preserve(ctx);
@@ -170,13 +170,18 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         /* Circle border */
         switch (pam_state) {
             case STATE_PAM_VERIFY:
-                cairo_set_source_rgba(ctx, 209.0/255, 219.0/255, 188.0/255, 0.75);
+                cairo_set_source_rgba(ctx, 68.0/255, 80.0/255, 41.0/255, 0.8);
                 break;
             case STATE_PAM_WRONG:
-                cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.75);
+                cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.8);
                 break;
             case STATE_PAM_IDLE:
-                cairo_set_source_rgba(ctx, 1, 1, 1, 0.75);
+                if (unlock_state == STATE_BACKSPACE_ACTIVE) {
+                    cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.8);
+                }
+                else {
+                    cairo_set_source_rgba(ctx, 1, 1, 1, 0.8);
+                }
                 break;
         }
         cairo_stroke(ctx);
@@ -191,13 +196,18 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         /* Color text, same as border */
         switch (pam_state) {
             case STATE_PAM_VERIFY:
-                cairo_set_source_rgba(ctx, 209.0/255, 219.0/255, 188.0/255, 0.75);
+                cairo_set_source_rgba(ctx, 68.0/255, 80.0/255, 41.0/255, 0.8);
                 break;
             case STATE_PAM_WRONG:
-                cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.75);
+                cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.8);
                 break;
             case STATE_PAM_IDLE:
-                cairo_set_source_rgba(ctx, 1, 1, 1, 0.75);
+                if (unlock_state == STATE_BACKSPACE_ACTIVE) {
+                    cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.8);
+                }
+                else {
+                    cairo_set_source_rgba(ctx, 1, 1, 1, 0.8);
+                }
                 break;
         }
 
@@ -229,21 +239,22 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                       BUTTON_CENTER /* y */,
                       BUTTON_RADIUS /* radius */,
                       highlight_start,
-                      highlight_start + (M_PI / 2.5));
-            if (unlock_state == STATE_KEY_ACTIVE) {
-                /* Normal Keys (erases sections) */
-                cairo_set_operator(ctx,CAIRO_OPERATOR_CLEAR);
-            } else {
-                /* Backspace + Escape (red) */
-                cairo_set_source_rgba(ctx, 173.0/255, 23.0/255, 23.0/255, 0.75);
-            }
+                      highlight_start + (M_PI / 2.5)); /* 2.5 */
+            cairo_set_operator(ctx,CAIRO_OPERATOR_CLEAR);
             cairo_stroke(ctx);
 
             /* Draw two little separators for the highlighted part of the
             * unlock indicator. */
             cairo_set_operator(ctx,CAIRO_OPERATOR_OVER);
             cairo_set_line_width(ctx, 10);
-            cairo_set_source_rgba(ctx, 1, 1, 1, 0.75);
+            
+            /* Change color of separators based on backspace/active keypress */
+            if (unlock_state == STATE_BACKSPACE_ACTIVE) {
+                cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.8);
+            }
+            else {
+                cairo_set_source_rgba(ctx, 1, 1, 1, 0.8);
+            }
             cairo_arc(ctx,
                 BUTTON_CENTER /* x */,
                 BUTTON_CENTER /* y */,
