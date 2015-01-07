@@ -151,7 +151,28 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                   2 * M_PI /* end */);
 
         /* Use the appropriate color for the different PAM states
-         * (currently verifying, wrong password, or default) */
+         * (currently verifying, wrong password, or default) 
+         * Basic function so we don't have to use this code 
+         * repeatedly for objects of the same color */
+
+        void get_color(void) {
+            switch (pam_state) {
+                case STATE_PAM_VERIFY:
+                    cairo_set_source_rgba(ctx, 68.0/255, 80.0/255, 41.0/255, 0.8);
+                    break;
+                case STATE_PAM_WRONG:
+                    cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.8);
+                    break;
+                case STATE_PAM_IDLE:
+                    if (unlock_state == STATE_BACKSPACE_ACTIVE) {
+                        cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.8);
+                    }
+                    else {
+                        cairo_set_source_rgba(ctx, 1, 1, 1, 0.8);
+                    }
+                break;
+            }
+        }
 
         /* Circle fill */
         switch (pam_state) {
@@ -168,22 +189,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         cairo_fill_preserve(ctx);
 
         /* Circle border */
-        switch (pam_state) {
-            case STATE_PAM_VERIFY:
-                cairo_set_source_rgba(ctx, 68.0/255, 80.0/255, 41.0/255, 0.8);
-                break;
-            case STATE_PAM_WRONG:
-                cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.8);
-                break;
-            case STATE_PAM_IDLE:
-                if (unlock_state == STATE_BACKSPACE_ACTIVE) {
-                    cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.8);
-                }
-                else {
-                    cairo_set_source_rgba(ctx, 1, 1, 1, 0.8);
-                }
-                break;
-        }
+        get_color();
         cairo_stroke(ctx);
 
         /* Display (centered) Time */
@@ -194,22 +200,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         strftime(timetext, 100, TIME_FORMAT, tm);
 
         /* Color text, same as border */
-        switch (pam_state) {
-            case STATE_PAM_VERIFY:
-                cairo_set_source_rgba(ctx, 68.0/255, 80.0/255, 41.0/255, 0.8);
-                break;
-            case STATE_PAM_WRONG:
-                cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.8);
-                break;
-            case STATE_PAM_IDLE:
-                if (unlock_state == STATE_BACKSPACE_ACTIVE) {
-                    cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.8);
-                }
-                else {
-                    cairo_set_source_rgba(ctx, 1, 1, 1, 0.8);
-                }
-                break;
-        }
+        get_color();
 
         cairo_set_font_size(ctx, 32.0);
 
@@ -239,22 +230,19 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                       BUTTON_CENTER /* y */,
                       BUTTON_RADIUS /* radius */,
                       highlight_start,
-                      highlight_start + (M_PI / 2.5)); /* 2.5 */
-            cairo_set_operator(ctx,CAIRO_OPERATOR_CLEAR);
+                      highlight_start + (M_PI / 2.5)); 
+            cairo_set_operator(ctx,CAIRO_OPERATOR_CLEAR); /* Set newly drawn lines to erase what they're drawn over*/
             cairo_stroke(ctx);
 
             /* Draw two little separators for the highlighted part of the
             * unlock indicator. */
-            cairo_set_operator(ctx,CAIRO_OPERATOR_OVER);
+            cairo_set_operator(ctx,CAIRO_OPERATOR_OVER); /* back to normal operator */
             cairo_set_line_width(ctx, 10);
-            
+
             /* Change color of separators based on backspace/active keypress */
-            if (unlock_state == STATE_BACKSPACE_ACTIVE) {
-                cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.8);
-            }
-            else {
-                cairo_set_source_rgba(ctx, 1, 1, 1, 0.8);
-            }
+            get_color();
+
+            /* separator 1 */
             cairo_arc(ctx,
                 BUTTON_CENTER /* x */,
                 BUTTON_CENTER /* y */,
@@ -262,6 +250,8 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                 highlight_start /* start */,
                 highlight_start + (M_PI / 128.0) /* end */);
             cairo_stroke(ctx);
+
+            /* separator 2 */
             cairo_arc(ctx,
                 BUTTON_CENTER /* x */,
                 BUTTON_CENTER /* y */,
