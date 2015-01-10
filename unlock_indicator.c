@@ -183,7 +183,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                 cairo_set_source_rgba(ctx, 172.0/255, 65.0/255, 66.0/255, 0.2);
                 break;
             default:
-                cairo_set_source_rgba(ctx, 0, 0, 0, 0.2);
+                cairo_set_source_rgba(ctx, 0, 0, 0, 0);
                 break;
         }
         cairo_fill_preserve(ctx);
