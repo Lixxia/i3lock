@@ -1,4 +1,9 @@
-This is my own fork of i3lock, consists of some color and stylistic tweaks. Including adding display of a 12-hour clock on screen. 
+This is my own copy of i3lock, consisting of the following tweaks: 
+- Changed the display on key-strokes and escape/backspace.
+- Added 12-hour clock to the unlock indicator and periodic updater so time stays relevant. 
+- Changed border, text and background colors.
+- Changed it so that the unlock indicator will always be displayed, regardless of state. (Originally it was only shown after initial keypress) 
+  
 
 ## Screenshots
 #### Default
