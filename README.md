@@ -1,3 +1,17 @@
+This is my own fork of i3lock, consists of some color and stylistic tweaks. Including adding display of a 12-hour clock on screen. 
+
+---
+## Screenshots
+![Default state](/screenshots/lockscreen.png?raw=true "Default")
+
+![On key press](/screenshots/lockscreenkeypress.png?raw=true "Key press")
+
+![On escape or backspace](/screenshots/lockscreenesc.png?raw=true "Escape")
+
+---
+
+Original README
+===============
 i3lock - improved screen locker
 ===============================
 i3lock is a simple screen locker like slock. After starting it, you will
