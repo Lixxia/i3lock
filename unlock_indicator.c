@@ -35,7 +35,8 @@ static struct ev_periodic *time_redraw_tick;
 extern bool debug_mode;
 
 /* The current position in the input buffer. Useful to determine if any
- * characters of the password have already been entered or not. */
+ * characters of the password have already been entered or not. 
+ */
 int input_position;
 
 /* The lock window. */
@@ -52,11 +53,22 @@ extern cairo_surface_t *img;
 
 /* Whether the image should be tiled. */
 extern bool tile;
+
 /* The background color to use (in hex). */
 extern char color[7];
 
+/* Verify color to use (in hex). */
+extern char verifycolor[7];
+
+/* Wrong/Error color to use (in hex). */
+extern char wrongcolor[7];
+
+/* Idle color to use (in hex). */
+extern char idlecolor[7];
+
 /* Whether the failed attempts should be displayed. */
 extern bool show_failed_attempts;
+
 /* Number of failed unlock attempts. */
 extern int failed_attempts;
 
@@ -75,14 +87,14 @@ extern xcb_screen_t *screen;
 static xcb_visualtype_t *vistype;
 
 /* Maintain the current unlock/PAM state to draw the appropriate unlock
- * indicator. */
+ * indicator. 
+ */
 unlock_state_t unlock_state;
 pam_state_t pam_state;
 
 /*
  * Returns the scaling factor of the current screen. E.g., on a 227 DPI MacBook
  * Pro 13" Retina screen, the scaling factor is 227/96 = 2.36.
- *
  */
 static double scaling_factor(void) {
     const int dpi = (double)screen->height_in_pixels * 25.4 /
@@ -93,7 +105,6 @@ static double scaling_factor(void) {
 /*
  * Draws global image with fill color onto a pixmap with the given
  * resolution and returns it.
- *
  */
 xcb_pixmap_t draw_image(uint32_t *resolution) {
     xcb_pixmap_t bg_pixmap = XCB_NONE;
@@ -104,14 +115,58 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
     if (!vistype)
         vistype = get_root_visual_type(screen);
     bg_pixmap = create_bg_pixmap(conn, screen, resolution, color);
-    /* Initialize cairo: Create one in-memory surface to render the unlock
+    /* 
+     * Initialize cairo: Create one in-memory surface to render the unlock
      * indicator on, create one XCB surface to actually draw (one or more,
-     * depending on the amount of screens) unlock indicators on. */
+     * depending on the amount of screens) unlock indicators on. 
+     */
     cairo_surface_t *output = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, button_diameter_physical, button_diameter_physical);
     cairo_t *ctx = cairo_create(output);
 
     cairo_surface_t *xcb_output = cairo_xcb_surface_create(conn, bg_pixmap, vistype, resolution[0], resolution[1]);
     cairo_t *xcb_ctx = cairo_create(xcb_output);
+
+    /* Creates color array from command line arguments */
+    uint32_t * color_array(char* colorarg) {
+        uint32_t *rgb16 = malloc(sizeof(uint32_t)*3);
+
+        char strgroups[3][3] = {{colorarg[0], colorarg[1], '\0'},
+                                {colorarg[2], colorarg[3], '\0'},
+                                {colorarg[4], colorarg[5], '\0'}};
+
+        for (int i=0; i < 3; i++) {
+            rgb16[i] = strtol(strgroups[i], NULL, 16);
+        }
+
+        return rgb16;
+    }
+
+    /* Sets the color based on argument (color/background, verify, wrong, idle)
+     * and type (line, background and fill). Type defines alpha value and tint.
+     * Utilizes color_array() and frees after use.
+     */
+    void set_color(cairo_t *cr, char *colorarg, char colortype) {
+        uint32_t *rgb16 = color_array(colorarg);
+
+        switch(colortype) {
+            case 'b': /* Background */
+                cairo_set_source_rgba(cr, rgb16[0] / 255.0, rgb16[1] / 255.0, rgb16[2] / 255.0, 1);
+                break;
+            case 'l': /* Line and text */
+                cairo_set_source_rgba(cr, rgb16[0] / 255.0, rgb16[1] / 255.0, rgb16[2] / 255.0, 0.8);
+                break;
+            case 'f': /* Fill */
+                /* Use a lighter tint of the user defined color for circle fill */
+                for (int i=0; i < 3; i++) {
+                    rgb16[i] = ((255 - rgb16[i]) * .25) + rgb16[i];
+                }
+                cairo_set_source_rgba(cr, rgb16[0] / 255.0, rgb16[1] / 255.0, rgb16[2] / 255.0, 0.2);
+                break;
+            case 'n': /* No color, used for default idle */
+                cairo_set_source_rgba(cr,0,0,0,0);
+        }
+        free(rgb16);
+    }
 
     if (img) {
         if (!tile) {
@@ -128,13 +183,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
             cairo_pattern_destroy(pattern);
         }
     } else {
-        char strgroups[3][3] = {{color[0], color[1], '\0'},
-                                {color[2], color[3], '\0'},
-                                {color[4], color[5], '\0'}};
-        uint32_t rgb16[3] = {(strtol(strgroups[0], NULL, 16)),
-                             (strtol(strgroups[1], NULL, 16)),
-                             (strtol(strgroups[2], NULL, 16))};
-        cairo_set_source_rgb(xcb_ctx, rgb16[0] / 255.0, rgb16[1] / 255.0, rgb16[2] / 255.0);
+        set_color(xcb_ctx,color,'b'); /* If not image, use color to fill background */
         cairo_rectangle(xcb_ctx, 0, 0, resolution[0], resolution[1]);
         cairo_fill(xcb_ctx);
     }
@@ -151,45 +200,51 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                   2 * M_PI /* end */);
 
         /* Use the appropriate color for the different PAM states
-         * (currently verifying, wrong password, or default) 
-         * Basic function so we don't have to use this code 
-         * repeatedly for objects of the same color */
+         * (currently verifying, wrong password, or idle) 
+         */
 
-        void get_color(void) {
+        void set_pam_color(char colortype) {
             switch (pam_state) {
                 case STATE_PAM_VERIFY:
-                    cairo_set_source_rgba(ctx, 68.0/255, 80.0/255, 41.0/255, 0.8);
+                    set_color(ctx,verifycolor,colortype);
                     break;
                 case STATE_PAM_WRONG:
-                    cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.8);
+                    set_color(ctx,wrongcolor,colortype);
                     break;
                 case STATE_PAM_IDLE:
                     if (unlock_state == STATE_BACKSPACE_ACTIVE) {
-                        cairo_set_source_rgba(ctx, 143.0/255, 53.0/255, 53.0/255, 0.8);
+                        set_color(ctx,wrongcolor,colortype);
                     }
                     else {
-                        cairo_set_source_rgba(ctx, 1, 1, 1, 0.8);
+                        // switch(colortype) {
+                        //     case 'l':
+                        //         set_color(ctx,idlecolor,colortype);
+                        //     case 'f':
+                        //         set_color(ctx,idlecolor,n); /* Empty Background */
+                        // }
+                        set_color(ctx,idlecolor,colortype);  
                     }
-                break;
+                    break;
             }
         }
 
         /* Circle fill */
-        switch (pam_state) {
-            case STATE_PAM_VERIFY:
-                cairo_set_source_rgba(ctx, 144.0/255, 169.0/255, 89.0/255, 0.2);
-                break;
-            case STATE_PAM_WRONG:
-                cairo_set_source_rgba(ctx, 172.0/255, 65.0/255, 66.0/255, 0.2);
-                break;
-            default:
-                cairo_set_source_rgba(ctx, 0, 0, 0, 0);
-                break;
-        }
+        // switch (pam_state) {
+        //     case STATE_PAM_VERIFY:
+        //         cairo_set_source_rgba(ctx, 114.75/255, 123.75/255, 94.5/255, 0.2);
+        //         break;
+        //     case STATE_PAM_WRONG:
+        //         cairo_set_source_rgba(ctx, 172.0/255, 65.0/255, 66.0/255, 0.2);
+        //         break;
+        //     default:
+        //         cairo_set_source_rgba(ctx, 0, 0, 0, 0);
+        //         break;
+        // }
+        set_pam_color('f');
         cairo_fill_preserve(ctx);
 
         /* Circle border */
-        get_color();
+        set_pam_color('l');
         cairo_stroke(ctx);
 
         /* Display (centered) Time */
@@ -199,9 +254,8 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         struct tm *tm = localtime(&curtime);
         strftime(timetext, 100, TIME_FORMAT, tm);
 
-        /* Color text, same as border */
-        get_color();
-
+        /* Text */
+        set_pam_color('l');
         cairo_set_font_size(ctx, 32.0);
 
         cairo_text_extents_t time_extents;
@@ -231,18 +285,19 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                       BUTTON_RADIUS /* radius */,
                       highlight_start,
                       highlight_start + (M_PI / 2.5)); 
-            cairo_set_operator(ctx,CAIRO_OPERATOR_CLEAR); /* Set newly drawn lines to erase what they're drawn over*/
+
+            /* Set newly drawn lines to erase what they're drawn over */
+            cairo_set_operator(ctx,CAIRO_OPERATOR_CLEAR); 
             cairo_stroke(ctx);
 
-            /* Draw two little separators for the highlighted part of the
-            * unlock indicator. */
-            cairo_set_operator(ctx,CAIRO_OPERATOR_OVER); /* back to normal operator */
+            /* Back to normal operator */
+            cairo_set_operator(ctx,CAIRO_OPERATOR_OVER); 
             cairo_set_line_width(ctx, 10);
 
             /* Change color of separators based on backspace/active keypress */
-            get_color();
+            set_pam_color('l');
 
-            /* separator 1 */
+            /* Separator 1 */
             cairo_arc(ctx,
                 BUTTON_CENTER /* x */,
                 BUTTON_CENTER /* y */,
@@ -251,7 +306,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                 highlight_start + (M_PI / 128.0) /* end */);
             cairo_stroke(ctx);
 
-            /* separator 2 */
+            /* Separator 2 */
             cairo_arc(ctx,
                 BUTTON_CENTER /* x */,
                 BUTTON_CENTER /* y */,
