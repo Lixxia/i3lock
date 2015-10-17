@@ -25,7 +25,7 @@
 #define BUTTON_SPACE (BUTTON_RADIUS + 5)
 #define BUTTON_CENTER (BUTTON_RADIUS + 5)
 #define BUTTON_DIAMETER (2 * BUTTON_SPACE)
-#define TIME_FORMAT "%l:%M%p"
+#define TIME_FORMAT "%l:%M %p"
 
 /*******************************************************************************
  * Variables defined in i3lock.c.
@@ -150,7 +150,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
 
         switch(colortype) {
             case 'b': /* Background */
-                cairo_set_source_rgba(cr, rgb16[0] / 255.0, rgb16[1] / 255.0, rgb16[2] / 255.0, 1);
+                cairo_set_source_rgb(cr, rgb16[0] / 255.0, rgb16[1] / 255.0, rgb16[2] / 255.0);
                 break;
             case 'l': /* Line and text */
                 cairo_set_source_rgba(cr, rgb16[0] / 255.0, rgb16[1] / 255.0, rgb16[2] / 255.0, 0.8);
@@ -158,12 +158,10 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
             case 'f': /* Fill */
                 /* Use a lighter tint of the user defined color for circle fill */
                 for (int i=0; i < 3; i++) {
-                    rgb16[i] = ((255 - rgb16[i]) * .25) + rgb16[i];
+                    rgb16[i] = ((255 - rgb16[i]) * .5) + rgb16[i];
                 }
                 cairo_set_source_rgba(cr, rgb16[0] / 255.0, rgb16[1] / 255.0, rgb16[2] / 255.0, 0.2);
                 break;
-            case 'n': /* No color, used for default idle */
-                cairo_set_source_rgba(cr,0,0,0,0);
         }
         free(rgb16);
     }
@@ -216,30 +214,12 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                         set_color(ctx,wrongcolor,colortype);
                     }
                     else {
-                        // switch(colortype) {
-                        //     case 'l':
-                        //         set_color(ctx,idlecolor,colortype);
-                        //     case 'f':
-                        //         set_color(ctx,idlecolor,n); /* Empty Background */
-                        // }
                         set_color(ctx,idlecolor,colortype);  
                     }
                     break;
             }
         }
 
-        /* Circle fill */
-        // switch (pam_state) {
-        //     case STATE_PAM_VERIFY:
-        //         cairo_set_source_rgba(ctx, 114.75/255, 123.75/255, 94.5/255, 0.2);
-        //         break;
-        //     case STATE_PAM_WRONG:
-        //         cairo_set_source_rgba(ctx, 172.0/255, 65.0/255, 66.0/255, 0.2);
-        //         break;
-        //     default:
-        //         cairo_set_source_rgba(ctx, 0, 0, 0, 0);
-        //         break;
-        // }
         set_pam_color('f');
         cairo_fill_preserve(ctx);
 
