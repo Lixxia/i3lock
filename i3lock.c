@@ -43,7 +43,13 @@
 typedef void (*ev_callback_t)(EV_P_ ev_timer *w, int revents);
 
 /* We need this for libxkbfile */
-char color[7] = "ffffff";
+
+/* Color options */
+char color[7] = "ffffff"; // background
+char verifycolor[7] = "00ff00"; // verify
+char wrongcolor[7] = "ff0000"; // wrong
+char idlecolor[7] = "000000"; // idle
+
 int inactivity_timeout = 30;
 uint32_t last_resolution[2];
 xcb_window_t win;
@@ -658,6 +664,21 @@ static void raise_loop(xcb_window_t window) {
     }
 }
 
+int verify_hex(char *arg, char *colortype, char *varname) {
+    /* Skip # if present */
+    if (arg[0] == '#') {
+        arg++;  
+    }
+        
+    if (strlen(arg) != 6 || sscanf(arg, "%06[0-9a-fA-F]", colortype) != 1) {
+        errx(EXIT_FAILURE, "%s is invalid, it must be given in 3-byte hexadecimal format: rrggbb\n", varname);
+
+        return 0;
+    }
+        
+    return 1;
+}
+
 int main(int argc, char *argv[]) {
     char *username;
     char *image_path = NULL;
@@ -681,13 +702,16 @@ int main(int argc, char *argv[]) {
         {"ignore-empty-password", no_argument, NULL, 'e'},
         {"inactivity-timeout", required_argument, NULL, 'I'},
         {"show-failed-attempts", no_argument, NULL, 'f'},
+        {"verify-color", required_argument, NULL, 'o'},
+        {"wrong-color", required_argument, NULL, 'w'},
+        {"idle-color", required_argument, NULL, 'l'},
         {NULL, no_argument, NULL, 0}
     };
 
     if ((username = getenv("USER")) == NULL)
         errx(EXIT_FAILURE, "USER environment variable not set, please set it.\n");
 
-    char *optstring = "hvnbdc:p:ui:teI:f";
+    char *optstring = "hvnbdc:o:w:l:p:ui:teI:f";
     while ((o = getopt_long(argc, argv, optstring, longopts, &optind)) != -1) {
         switch (o) {
         case 'v':
@@ -708,18 +732,18 @@ int main(int argc, char *argv[]) {
             inactivity_timeout = time;
             break;
         }
-        case 'c': {
-            char *arg = optarg;
-
-            /* Skip # if present */
-            if (arg[0] == '#')
-                arg++;
-
-            if (strlen(arg) != 6 || sscanf(arg, "%06[0-9a-fA-F]", color) != 1)
-                errx(EXIT_FAILURE, "color is invalid, it must be given in 3-byte hexadecimal format: rrggbb\n");
-
+        case 'c': 
+            verify_hex(optarg,color, "color");
             break;
-        }
+        case 'o':
+            verify_hex(optarg,verifycolor, "verifycolor");
+            break;
+        case 'w':
+            verify_hex(optarg,wrongcolor, "wrongcolor");
+            break;
+        case 'l':
+            verify_hex(optarg,idlecolor, "idlecolor");
+            break;
         case 'u':
             unlock_indicator = false;
             break;
@@ -749,7 +773,7 @@ int main(int argc, char *argv[]) {
             show_failed_attempts = true;
             break;
         default:
-            errx(EXIT_FAILURE, "Syntax: i3lock [-v] [-n] [-b] [-d] [-c color] [-u] [-p win|default]"
+            errx(EXIT_FAILURE, "Syntax: i3lock [-v] [-n] [-b] [-d] [-c color] [-o color] [-w color] [-l color] [-u] [-p win|default]"
             " [-i image.png] [-t] [-e] [-I] [-f]"
             );
         }

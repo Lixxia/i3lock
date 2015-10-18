@@ -1,16 +1,24 @@
 This is my own copy of i3lock, consisting of the following tweaks: 
-- Changed the display on key-strokes and escape/backspace.
+- Display changes on key-strokes and escape/backspace.
 - Added 12-hour clock to the unlock indicator and periodic updater so time stays relevant. 
-- Changed border, text and background colors.
-- Changed it so that the unlock indicator will always be displayed, regardless of state. (Originally it was only shown after initial keypress) 
-  
+- The unlock indicator will always be displayed, regardless of state. (Originally it was only shown after initial keypress) 
+- **10/17/15** Added command line arguments to customize colors. Each (optional) argument will accept a color in hexadecimal format. 
+  - `-o color` Specifies verification color
+  - `-w color` Specifies wrong password/backspace color
+  - `-l color` Specifies default/idle color
+  - The given colors will be used as-is for the lines and text for their respective states. The colors will automatically be lightened slightly and used with lower opacity (20%) for the circle fill. 
+  - If no colors are specified it defaults to green/red/black for verify/wrong/idle respectively.
+
+## Example Usage
+`i3lock -i ~/.i3/background.png -c '#000000' -o '#191d0f' -w '#572020' -l '#ffffff' -e`
 
 ## Screenshots
+*TODO:* Add screenshots of default behavior. (No colors specified)
 #### Default
 ![Default state](/screenshots/lockscreen.png?raw=true "")
-### Key Press
+#### Key Press
 ![On key press](/screenshots/lockscreenkeypress.png?raw=true "")
-### Escape/Backspace
+#### Escape/Backspace
 ![On escape or backspace](/screenshots/lockscreenesc.png?raw=true "")
 
 <p>
