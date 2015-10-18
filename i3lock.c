@@ -46,9 +46,9 @@ typedef void (*ev_callback_t)(EV_P_ ev_timer *w, int revents);
 
 /* Color options */
 char color[7] = "ffffff"; // background
-char verifycolor[7] = "445029"; // verify
-char wrongcolor[7] = "8f3535"; // wrong
-char idlecolor[7] = "ffffff"; // idle
+char verifycolor[7] = "00ff00"; // verify
+char wrongcolor[7] = "ff0000"; // wrong
+char idlecolor[7] = "000000"; // idle
 
 int inactivity_timeout = 30;
 uint32_t last_resolution[2];
