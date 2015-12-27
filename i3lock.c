@@ -50,6 +50,9 @@ char verifycolor[7] = "00ff00"; // verify
 char wrongcolor[7] = "ff0000"; // wrong
 char idlecolor[7] = "000000"; // idle
 
+/* Time format */
+bool use24hour = false;
+
 int inactivity_timeout = 30;
 uint32_t last_resolution[2];
 xcb_window_t win;
@@ -705,6 +708,7 @@ int main(int argc, char *argv[]) {
         {"verify-color", required_argument, NULL, 'o'},
         {"wrong-color", required_argument, NULL, 'w'},
         {"idle-color", required_argument, NULL, 'l'},
+        {"24", no_argument, NULL, '4'},
         {NULL, no_argument, NULL, 0}
     };
 
@@ -744,6 +748,9 @@ int main(int argc, char *argv[]) {
         case 'l':
             verify_hex(optarg,idlecolor, "idlecolor");
             break;
+        case '4':
+            use24hour = true;
+            break;
         case 'u':
             unlock_indicator = false;
             break;
@@ -774,7 +781,7 @@ int main(int argc, char *argv[]) {
             break;
         default:
             errx(EXIT_FAILURE, "Syntax: i3lock [-v] [-n] [-b] [-d] [-c color] [-o color] [-w color] [-l color] [-u] [-p win|default]"
-            " [-i image.png] [-t] [-e] [-I] [-f]"
+            " [-i image.png] [-t] [-e] [-I] [-f] [--24]"
             );
         }
     }
