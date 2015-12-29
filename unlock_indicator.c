@@ -25,7 +25,8 @@
 #define BUTTON_SPACE (BUTTON_RADIUS + 5)
 #define BUTTON_CENTER (BUTTON_RADIUS + 5)
 #define BUTTON_DIAMETER (2 * BUTTON_SPACE)
-#define TIME_FORMAT "%l:%M %p"
+#define TIME_FORMAT_12 "%l:%M %p"
+#define TIME_FORMAT_24 "%k:%M"
 
 /*******************************************************************************
  * Variables defined in i3lock.c.
@@ -65,6 +66,9 @@ extern char wrongcolor[7];
 
 /* Idle color to use (in hex). */
 extern char idlecolor[7];
+
+/* Use 24 hour time format */
+extern bool use24hour;
 
 /* Whether the failed attempts should be displayed. */
 extern bool show_failed_attempts;
@@ -232,7 +236,10 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
 
         time_t curtime = time(NULL);
         struct tm *tm = localtime(&curtime);
-        strftime(timetext, 100, TIME_FORMAT, tm);
+        if (use24hour)
+            strftime(timetext, 100, TIME_FORMAT_24, tm);
+        else
+            strftime(timetext, 100, TIME_FORMAT_12, tm);
 
         /* Text */
         set_pam_color('l');
