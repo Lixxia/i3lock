@@ -1,18 +1,21 @@
+TOPDIR=$(shell pwd)
+
 INSTALL=install
 PREFIX=/usr
 SYSCONFDIR=/etc
+PKG_CONFIG=pkg-config
 
 # Check if pkg-config is installed, we need it for building CFLAGS/LIBS
-ifeq ($(shell which pkg-config 2>/dev/null 1>/dev/null || echo 1),1)
-$(error "pkg-config was not found")
+ifeq ($(shell which $(PKG_CONFIG) 2>/dev/null 1>/dev/null || echo 1),1)
+$(error "$(PKG_CONFIG) was not found")
 endif
 
 CFLAGS += -std=c99
 CFLAGS += -pipe
 CFLAGS += -Wall
 CPPFLAGS += -D_GNU_SOURCE
-CFLAGS += $(shell pkg-config --cflags cairo xcb-dpms xcb-xinerama xcb-atom xcb-image xcb-xkb xkbcommon xkbcommon-x11)
-LIBS += $(shell pkg-config --libs cairo xcb-dpms xcb-xinerama xcb-atom xcb-image xcb-xkb xkbcommon xkbcommon-x11)
+CFLAGS += $(shell $(PKG_CONFIG) --cflags cairo xcb-dpms xcb-xinerama xcb-atom xcb-image xcb-xkb xkbcommon xkbcommon-x11)
+LIBS += $(shell $(PKG_CONFIG) --libs cairo xcb-dpms xcb-xinerama xcb-atom xcb-image xcb-xkb xkbcommon xkbcommon-x11)
 LIBS += -lpam
 LIBS += -lev
 LIBS += -lm
@@ -20,9 +23,15 @@ LIBS += -lm
 FILES:=$(wildcard *.c)
 FILES:=$(FILES:.c=.o)
 
-VERSION:=$(shell git describe --tags --abbrev=0)
-GIT_VERSION:="$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1))"
-CPPFLAGS += -DVERSION=\"${GIT_VERSION}\"
+ifeq ($(wildcard .git),)
+  # not in git repository
+  VERSION := $(shell [ -f $(TOPDIR)/I3LOCK_VERSION ] && cat $(TOPDIR)/I3LOCK_VERSION | cut -d '-' -f 1)
+  I3LOCK_VERSION := '$(shell [ -f $(TOPDIR)/I3LOCK_VERSION ] && cat $(TOPDIR)/I3LOCK_VERSION)'
+else
+  VERSION:=$(shell git describe --tags --abbrev=0)
+  I3LOCK_VERSION:="$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1))"
+endif
+CPPFLAGS += -DVERSION=\"${I3LOCK_VERSION}\"
 
 .PHONY: install clean uninstall
 
@@ -47,7 +56,7 @@ dist: clean
 	[ ! -d i3lock-${VERSION} ] || rm -rf i3lock-${VERSION}
 	[ ! -e i3lock-${VERSION}.tar.bz2 ] || rm i3lock-${VERSION}.tar.bz2
 	mkdir i3lock-${VERSION}
-	cp *.c *.h i3lock.1 i3lock.pam Makefile LICENSE README CHANGELOG i3lock-${VERSION}
-	sed -e 's/^GIT_VERSION:=\(.*\)/GIT_VERSION:=$(shell /bin/echo '${GIT_VERSION}' | sed 's/\\/\\\\/g')/g;s/^VERSION:=\(.*\)/VERSION:=${VERSION}/g' Makefile > i3lock-${VERSION}/Makefile
+	cp *.c *.h i3lock.1 i3lock.pam Makefile LICENSE README.md CHANGELOG i3lock-${VERSION}
+	sed -e 's/^I3LOCK_VERSION:=\(.*\)/I3LOCK_VERSION:=$(shell /bin/echo '${I3LOCK_VERSION}' | sed 's/\\/\\\\/g')/g;s/^VERSION:=\(.*\)/VERSION:=${VERSION}/g' Makefile > i3lock-${VERSION}/Makefile
 	tar cfj i3lock-${VERSION}.tar.bz2 i3lock-${VERSION}
 	rm -rf i3lock-${VERSION}

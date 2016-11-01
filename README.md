@@ -13,13 +13,22 @@ This is my own copy of i3lock, consisting of the following tweaks:
 `i3lock -i ~/.i3/background.png -c '#000000' -o '#191d0f' -w '#572020' -l '#ffffff' -e`
 
 ## Screenshots
-*TODO:* Add screenshots of default behavior. (No colors specified)
-#### Default
-![Default state](/screenshots/lockscreen.png?raw=true "")
+
+#### No configuration specified
+![Default](/images/defaultlock.png?raw=true "")
+#### Error Color
+![Error](/images/defaulterror.png?raw=true "")
+
+### Example Configuration
+
+#### Idle
+![Idle state](/images/lockscreen.png?raw=true "")
 #### Key Press
-![On key press](/screenshots/lockscreenkeypress.png?raw=true "")
+![On key press](/images/lockscreenkeypress.png?raw=true "")
 #### Escape/Backspace
-![On escape or backspace](/screenshots/lockscreenesc.png?raw=true "")
+![On escape or backspace](/images/lockscreenesc.png?raw=true "")
+
+Background in above screenshots can be found in images/background.jpg
 
 <p>
 ---
@@ -55,9 +64,8 @@ Requirements
 - libev
 - libx11-dev
 - libx11-xcb-dev
-- libxkbfile-dev
-- libxkbcommon >= 0.4.0
-- libxkbcommon-x11 >= 0.4.0
+- libxkbcommon >= 0.5.0
+- libxkbcommon-x11 >= 0.5.0
 
 Running i3lock
 -------------
@@ -66,4 +74,4 @@ press enter.
 
 Upstream
 --------
-Please submit patches to http://cr.i3wm.org/
+Please submit pull requests to https://github.com/i3/i3lock

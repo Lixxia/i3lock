@@ -1,7 +1,7 @@
 /*
  * vim:ts=4:sw=4:expandtab
  *
- * © 2010-2014 Michael Stapelberg
+ * © 2010 Michael Stapelberg
  *
  * See LICENSE for licensing information
  *
@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <xcb/xcb.h>
 #include <ev.h>
@@ -48,6 +49,9 @@ extern uint32_t last_resolution[2];
 
 /* Whether the unlock indicator is enabled (defaults to true). */
 extern bool unlock_indicator;
+
+/* List of pressed modifiers, or NULL if none are pressed. */
+extern char *modifier_string;
 
 /* A Cairo surface containing the specified image (-i), if any. */
 extern cairo_surface_t *img;
@@ -207,10 +211,15 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
 
         void set_pam_color(char colortype) {
             switch (pam_state) {
+                case STATE_PAM_LOCK:
+                    set_color(ctx,idlecolor,colortype);
                 case STATE_PAM_VERIFY:
                     set_color(ctx,verifycolor,colortype);
                     break;
                 case STATE_PAM_WRONG:
+                    set_color(ctx,wrongcolor,colortype);
+                    break;
+                case STATE_I3LOCK_LOCK_FAILED:
                     set_color(ctx,wrongcolor,colortype);
                     break;
                 case STATE_PAM_IDLE:
@@ -257,6 +266,21 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         cairo_close_path(ctx);
 
         free(timetext);
+
+        if (pam_state == STATE_PAM_WRONG && (modifier_string != NULL)) {
+            cairo_text_extents_t extents;
+            double x, y;
+
+            cairo_set_font_size(ctx, 14.0);
+
+            cairo_text_extents(ctx, modifier_string, &extents);
+            x = BUTTON_CENTER - ((extents.width / 2) + extents.x_bearing);
+            y = BUTTON_CENTER - ((extents.height / 2) + extents.y_bearing) + 28.0;
+
+            cairo_move_to(ctx, x, y);
+            cairo_show_text(ctx, modifier_string);
+            cairo_close_path(ctx);
+        }
 
         /* After the user pressed any valid key or the backspace key, we
          * highlight a random part of the unlock indicator to confirm this
@@ -333,8 +357,9 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
 
 /* Calls draw_image on a new pixmap and swaps that with the current pixmap */
 void redraw_screen(void) {
+    DEBUG("redraw_screen(unlock_state = %d, pam_state = %d)\n", unlock_state, pam_state);
     xcb_pixmap_t bg_pixmap = draw_image(last_resolution);
-    xcb_change_window_attributes(conn, win, XCB_CW_BACK_PIXMAP, (uint32_t[1]){ bg_pixmap });
+    xcb_change_window_attributes(conn, win, XCB_CW_BACK_PIXMAP, (uint32_t[1]){bg_pixmap});
     /* XXX: Possible optimization: Only update the area in the middle of the
      * screen instead of the whole screen. */
     xcb_clear_area(conn, 0, win, 0, 0, last_resolution[0], last_resolution[1]);
