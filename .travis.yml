@@ -1,0 +1,29 @@
+# Use Ubuntu 14.04 (trusty), as per http://blog.travis-ci.com/2015-10-14-opening-up-ubuntu-trusty-beta/
+sudo: required
+dist: trusty
+language: c
+compiler:
+  - gcc
+  - clang
+addons:
+  apt:
+    packages:
+    - clang-format-3.5
+    - pkg-config
+    - libpam0g-dev
+    - libcairo2-dev
+    - libxcb1-dev
+    - libxcb-dpms0-dev
+    - libxcb-image0-dev
+    - libxcb-util0-dev
+    - libev-dev
+    - libxcb-xinerama0-dev
+    - libxcb-xkb-dev
+before_install:
+  - "echo 'APT::Default-Release \"trusty\";' | sudo tee /etc/apt/apt.conf.d/default-release"
+  - "echo 'deb http://archive.ubuntu.com/ubuntu/ wily main universe' | sudo tee /etc/apt/sources.list.d/wily.list"
+  - sudo apt-get update
+  - sudo apt-get --force-yes -y install -t wily libxkbcommon-dev libxkbcommon-x11-dev
+script:
+  - make -j
+  - clang-format-3.5 -i *.[ch] && git diff --exit-code || (echo 'Code was not formatted using clang-format!'; false)

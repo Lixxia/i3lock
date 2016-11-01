@@ -1,3 +1,31 @@
+2016-06-04 i3lock 2.8
+
+ • Remove DPMS support in favor of a wrapper script and xset(1).
+ • Indicate that the --inactivity-timeout option takes an argument. (Thanks
+   Kenneth Lyons)
+ • fix pam_securetty: set PAM_TTY to getenv("DISPLAY")
+ • Eat XKB_KEY_Delete and XKB_KEY_KP_Delete (Thanks bebehei)
+ • Show unlock indicator if password was entered during PAM verification
+ • Allow CTRL+J as enter and CTRL+H as backspace (Thanks Karl Tarbe)
+ • Flush xcb connection after opening fullscreen window (Thanks martin)
+ • Add support for `xss-lock --transfer-sleep-lock'
+
+2015-05-20 i3lock 2.7
+
+ • Die when the X11 connection breaks during runtime (Thanks Eduan)
+ • Implement logging the number of failed attempts (Thanks koebi)
+ • Ignore password validation is pam is in wrong state (Thanks Neodyblue)
+ • Get current user with getpwuid() instead of using $ENV{USER} (Thanks Martin)
+ • Add support for Compose and dead-keys with libxkbcommon.
+   Requires libxkbcommon ≥ 0.5.0 (Thanks Daniel)
+ • Format the source using clang-format.
+ • Refresh pam credentials on successful authentication (for Kerberos and the
+   like) (Thanks James)
+ • List pressed modifiers on failed authentication (Thanks Deiz, Alexandre)
+ • Only redraw the screen if the unlock indicator is actually used
+   (Thanks Ingo)
+ • Make pkg-config configurable for cross-compilation (Thanks Nikolay)
+
 2014-07-18 i3lock 2.6
 
  • NEW DEPENDENCY: use libxkbcommon-x11 instead of libX11
