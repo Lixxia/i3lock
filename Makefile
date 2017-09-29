@@ -1,8 +1,8 @@
 TOPDIR=$(shell pwd)
 
 INSTALL=install
-PREFIX=/usr
-SYSCONFDIR=/etc
+PREFIX?=/usr
+SYSCONFDIR?=/etc
 PKG_CONFIG=pkg-config
 
 # Check if pkg-config is installed, we need it for building CFLAGS/LIBS
