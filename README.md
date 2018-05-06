@@ -49,6 +49,7 @@ Run the following commands:
 ```
 git clone https://github.com/Lixxia/i3lock.git
 cd i3lock
+autoreconf -fi
 mkdir -p build && cd build
 ../configure
 make && sudo make install
