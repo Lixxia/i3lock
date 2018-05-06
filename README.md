@@ -1,8 +1,11 @@
+i3lock
+======
+
 This is my own copy of i3lock, consisting of the following tweaks: 
 - Display changes on key-strokes and escape/backspace.
 - Added 12-hour clock to the unlock indicator and periodic updater so time stays relevant. 
 - The unlock indicator will always be displayed, regardless of state. (Originally it was only shown after initial keypress) 
-- **10/17/15** Added command line arguments to customize colors. Each (optional) argument will accept a color in hexadecimal format. 
+- Command line arguments to customize colors. Each (optional) argument will accept a color in hexadecimal format. 
   - `-o color` Specifies verification color
   - `-w color` Specifies wrong password/backspace color
   - `-l color` Specifies default/idle color
@@ -31,7 +34,27 @@ This is my own copy of i3lock, consisting of the following tweaks:
 Background in above screenshots can be found in images/background.jpg
 
 <p>
+
+## Install
+
+### Dependencies
+
+Make sure you have the following libraries installed in addition to the packages in the requirements section below.
+
+`libxkbcommon-dev libxkbcommon-x11-dev libpam0g-devl`
+
+### Build
+
+Run the following commands: 
+
+`git clone https://github.com/Lixxia/i3lock.git`
+`cd i3lock`
+`mkdir -p build && cd build`
+`../configure`
+`make && sudo make install`
+
 ---
+
 ### Original README
 
 i3lock - improved screen locker
@@ -52,6 +75,7 @@ Many little improvements have been made to i3lock over time:
 - You can specify whether i3lock should bell upon a wrong password.
 
 - i3lock uses PAM and therefore is compatible with LDAP etc.
+  On OpenBSD i3lock uses the bsd_auth(3) framework.
 
 Requirements
 ------------
@@ -61,6 +85,7 @@ Requirements
 - libpam-dev
 - libcairo-dev
 - libxcb-xinerama
+- libxcb-randr
 - libev
 - libx11-dev
 - libx11-xcb-dev
@@ -71,6 +96,9 @@ Running i3lock
 -------------
 Simply invoke the 'i3lock' command. To get out of it, enter your password and
 press enter.
+
+On OpenBSD the `i3lock` binary needs to be setgid `auth` to call the
+authentication helpers, e.g. `/usr/libexec/auth/login_passwd`.
 
 Upstream
 --------

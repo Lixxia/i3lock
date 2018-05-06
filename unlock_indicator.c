@@ -20,7 +20,7 @@
 #include "i3lock.h"
 #include "xcb.h"
 #include "unlock_indicator.h"
-#include "xinerama.h"
+#include "randr.h"
 
 #define BUTTON_RADIUS 90
 #define BUTTON_SPACE (BUTTON_RADIUS + 5)
@@ -98,7 +98,7 @@ static xcb_visualtype_t *vistype;
  * indicator. 
  */
 unlock_state_t unlock_state;
-pam_state_t pam_state;
+auth_state_t auth_state;
 
 /*
  * Returns the scaling factor of the current screen. E.g., on a 227 DPI MacBook
@@ -209,20 +209,21 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
          * (currently verifying, wrong password, or idle) 
          */
 
-        void set_pam_color(char colortype) {
-            switch (pam_state) {
-                case STATE_PAM_LOCK:
-                    set_color(ctx,idlecolor,colortype);
-                case STATE_PAM_VERIFY:
+        void set_auth_color(char colortype) {
+            switch (auth_state) {
+                case STATE_AUTH_VERIFY:
                     set_color(ctx,verifycolor,colortype);
                     break;
-                case STATE_PAM_WRONG:
+                case STATE_AUTH_LOCK:
+                    set_color(ctx,idlecolor,colortype);
+                    break;
+                case STATE_AUTH_WRONG:
                     set_color(ctx,wrongcolor,colortype);
                     break;
                 case STATE_I3LOCK_LOCK_FAILED:
                     set_color(ctx,wrongcolor,colortype);
                     break;
-                case STATE_PAM_IDLE:
+                case STATE_AUTH_IDLE:
                     if (unlock_state == STATE_BACKSPACE_ACTIVE) {
                         set_color(ctx,wrongcolor,colortype);
                     }
@@ -233,11 +234,11 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
             }
         }
 
-        set_pam_color('f');
+        set_auth_color('f');
         cairo_fill_preserve(ctx);
 
         /* Circle border */
-        set_pam_color('l');
+        set_auth_color('l');
         cairo_stroke(ctx);
 
         /* Display (centered) Time */
@@ -251,11 +252,12 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
             strftime(timetext, 100, TIME_FORMAT_12, tm);
 
         /* Text */
-        set_pam_color('l');
+        set_auth_color('l');
         cairo_set_font_size(ctx, 32.0);
 
         cairo_text_extents_t time_extents;
         double time_x, time_y;
+        //cairo_select_font_face(ctx, "sans-serif", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
 
         cairo_text_extents(ctx, timetext, &time_extents);
         time_x = BUTTON_CENTER - ((time_extents.width / 2) + time_extents.x_bearing);
@@ -267,7 +269,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
 
         free(timetext);
 
-        if (pam_state == STATE_PAM_WRONG && (modifier_string != NULL)) {
+        if (auth_state == STATE_AUTH_WRONG && (modifier_string != NULL)) {
             cairo_text_extents_t extents;
             double x, y;
 
@@ -306,7 +308,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
             cairo_set_line_width(ctx, 10);
 
             /* Change color of separators based on backspace/active keypress */
-            set_pam_color('l');
+            set_auth_color('l');
 
             /* Separator 1 */
             cairo_arc(ctx,
@@ -357,7 +359,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
 
 /* Calls draw_image on a new pixmap and swaps that with the current pixmap */
 void redraw_screen(void) {
-    DEBUG("redraw_screen(unlock_state = %d, pam_state = %d)\n", unlock_state, pam_state);
+    DEBUG("redraw_screen(unlock_state = %d, auth_state = %d)\n", unlock_state, auth_state);
     xcb_pixmap_t bg_pixmap = draw_image(last_resolution);
     xcb_change_window_attributes(conn, win, XCB_CW_BACK_PIXMAP, (uint32_t[1]){bg_pixmap});
     /* XXX: Possible optimization: Only update the area in the middle of the
