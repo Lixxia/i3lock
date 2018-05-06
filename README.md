@@ -46,12 +46,13 @@ Make sure you have the following libraries installed in addition to the packages
 ### Build
 
 Run the following commands: 
-
-`git clone https://github.com/Lixxia/i3lock.git`
-`cd i3lock`
-`mkdir -p build && cd build`
-`../configure`
-`make && sudo make install`
+```
+git clone https://github.com/Lixxia/i3lock.git
+cd i3lock
+mkdir -p build && cd build
+../configure
+make && sudo make install
+```
 
 ---
 
