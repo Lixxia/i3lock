@@ -887,7 +887,7 @@ int main(int argc, char *argv[]) {
 #endif
     int curs_choice = CURS_NONE;
     int o;
-    int longoptind = 0;
+    int optind = 0;
     struct option longopts[] = {
         {"version", no_argument, NULL, 'v'},
         {"nofork", no_argument, NULL, 'n'},
