@@ -80,6 +80,15 @@ extern bool show_failed_attempts;
 /* Number of failed unlock attempts. */
 extern int failed_attempts;
 
+/* Whether to show PAM messages or not. */
+extern bool show_pam_message;
+
+/* PAM_conv message. */
+extern char pam_message_str[512];
+
+/* PAM_conv message line 2. */
+char pam_message_str_2[25];
+
 /*******************************************************************************
  * Variables defined in xcb.c.
  ******************************************************************************/
@@ -266,6 +275,45 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         cairo_move_to(ctx, time_x, time_y);
         cairo_show_text(ctx, timetext);
         cairo_close_path(ctx);
+
+        if (show_pam_message) {
+            set_auth_color('l');
+            cairo_set_font_size(ctx, 10.0);
+
+            if (strcmp(pam_message_str, "Password: ") == 0) { // We don't want to show a "Password: " prompt since that is redundant
+                pam_message_str[0] = '\0'; // Two since we are using UTF-8
+                pam_message_str[1] = '\0';
+            }
+
+            memset(pam_message_str_2, '\0', 25); // Initialize the second line buffer
+
+            if (strlen(pam_message_str) > 24) {
+                memcpy(pam_message_str_2, &pam_message_str[25], 24);
+                pam_message_str[25] = '\0';
+                pam_message_str[26] = '\0';
+                pam_message_str_2[25] = '\0';
+                pam_message_str_2[26] = '\0';
+            }
+
+            cairo_text_extents_t pam_extents;
+            double pam_x, pam_y;
+            //cairo_select_font_face(ctx, "sans-serif", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+
+            cairo_text_extents(ctx, pam_message_str, &pam_extents);
+            pam_x = BUTTON_CENTER - ((pam_extents.width / 2) + pam_extents.x_bearing);
+            pam_y = BUTTON_CENTER - ((pam_extents.height / 2) + pam_extents.y_bearing) + 35;
+
+            cairo_move_to(ctx, pam_x, pam_y);
+            cairo_show_text(ctx, pam_message_str);
+            if (strlen(pam_message_str_2) != 0) {
+                cairo_text_extents(ctx, pam_message_str_2, &pam_extents);
+                pam_x = BUTTON_CENTER - ((pam_extents.width / 2) + pam_extents.x_bearing);
+                pam_y = BUTTON_CENTER - ((pam_extents.height / 2) + pam_extents.y_bearing) + 45;
+                cairo_move_to(ctx, pam_x, pam_y);
+                cairo_show_text(ctx, pam_message_str_2);
+            }
+            cairo_close_path(ctx);
+        }
 
         free(timetext);
 

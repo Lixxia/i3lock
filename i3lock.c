@@ -81,6 +81,8 @@ static char password[512];
 static bool beep = false;
 bool debug_mode = false;
 bool unlock_indicator = true;
+char pam_message_str[512];
+bool show_pam_message = false;
 char *modifier_string = NULL;
 static bool dont_fork = false;
 struct ev_loop *main_loop;
@@ -691,6 +693,15 @@ static int conv_callback(int num_msg, const struct pam_message **msg,
     }
 
     for (int c = 0; c < num_msg; c++) {
+        
+        memset(pam_message_str, '\0', 512);
+        strcpy(pam_message_str, msg[c]->msg);
+        if (strlen(pam_message_str) > 0 && strcmp(pam_message_str, "Password: ") != 0 && msg[c]->msg_style != PAM_PROMPT_ECHO_OFF) {
+            redraw_screen();
+        } else {
+            memset(pam_message_str, '\0', 512);
+        }
+
         if (msg[c]->msg_style != PAM_PROMPT_ECHO_OFF &&
             msg[c]->msg_style != PAM_PROMPT_ECHO_ON)
             continue;
@@ -906,6 +917,7 @@ int main(int argc, char *argv[]) {
         {"verify-color", required_argument, NULL, 'o'},
         {"wrong-color", required_argument, NULL, 'w'},
         {"idle-color", required_argument, NULL, 'l'},
+        {"pam-messages", no_argument, NULL, 'm'},
         {"24", no_argument, NULL, '4'},
         {NULL, no_argument, NULL, 0}
     };
@@ -915,7 +927,7 @@ int main(int argc, char *argv[]) {
     if ((username = pw->pw_name) == NULL)
         errx(EXIT_FAILURE, "pw->pw_name is NULL.\n");
 
-    char *optstring = "hvnbdc:o:w:l:p:ui:teI:f";
+    char *optstring = "hvnbdmc:o:w:l:p:ui:teI:f";
     while ((o = getopt_long(argc, argv, optstring, longopts, &optind)) != -1) {
         switch (o) {
         case 'v':
@@ -976,9 +988,12 @@ int main(int argc, char *argv[]) {
         case 'f':
             show_failed_attempts = true;
             break;
+        case 'm':
+            show_pam_message = true;
+            break;
         default:
             errx(EXIT_FAILURE, "Syntax: i3lock [-v] [-n] [-b] [-d] [-c color] [-o color] [-w color] [-l color] [-u] [-p win|default]"
-            " [-i image.png] [-t] [-e] [-I] [-f] [--24]"
+            " [-i image.png] [-t] [-e] [-I] [-f] [--24] [-m]"
             );
         }
     }
@@ -1145,6 +1160,7 @@ int main(int argc, char *argv[]) {
 
     /* Explicitly call the screen redraw in case "locking…" message was displayed */
     auth_state = STATE_AUTH_IDLE;
+    memset(pam_message_str, '\0', 512);
     redraw_screen();
 
     struct ev_io *xcb_watcher = calloc(sizeof(struct ev_io), 1);
