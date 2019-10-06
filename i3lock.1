@@ -8,7 +8,7 @@
 .fi
 ..
 
-.TH i3lock 1 "JANUARY 2012" Linux "User Manuals"
+.TH i3lock 1 "NOVEMBER 2016" Linux "User Manuals"
 
 .SH NAME
 i3lock \- improved screen locker
@@ -22,12 +22,19 @@ i3lock \- improved screen locker
 .IR image.png \|]
 .RB [\|\-c
 .IR color \|]
+.RB [\|\-o
+.IR color \|]
+.RB [\|\-w
+.IR color \|]
+.RB [\|\-l
+.IR color \|]
 .RB [\|\-t\|]
 .RB [\|\-p
 .IR pointer\|]
 .RB [\|\-u\|]
 .RB [\|\-e\|]
 .RB [\|\-f\|]
+.RB [\|\-\-24\|]
 
 .SH DESCRIPTION
 .B i3lock
@@ -106,6 +113,21 @@ Turn the screen into the given color instead of white. Color must be given in 3-
 format: rrggbb (i.e. ff0000 is red).
 
 .TP
+.BI \-o\  rrggbb \fR,\ \fB\-\-verify\-color= rrggbb
+Specify the verification color using the given color instead of green. Color must be given in 3-byte
+format: rrggbb (i.e. ff0000 is red).
+
+.TP
+.BI \-w\  rrggbb \fR,\ \fB\-\-wrong\-color= rrggbb
+Specify the wrong password/backspace color using the given color instead of red. Color must be given in 3-byte
+format: rrggbb (i.e. ff0000 is red).
+
+.TP
+.BI \-l\  rrggbb \fR,\ \fB\-\-idle\-color= rrggbb
+Specify the default/idle color using the given color instead of black. Color must be given in 3-byte
+format: rrggbb (i.e. ff0000 is red).
+
+.TP
 .B \-t, \-\-tiling
 If an image is specified (via \-i) it will display the image tiled all over the screen
 (if it is a multi-monitor setup, the image is visible on all screens).
@@ -131,6 +153,10 @@ your computer with the enter key.
 .TP
 .B \-f, \-\-show-failed-attempts
 Show the number of failed attempts, if any.
+
+.TP
+.B \-\-24
+Uses a 24 Hour clock.
 
 .TP
 .B \-\-debug
@@ -171,3 +197,5 @@ The \-I (-\-inactivity-timeout=seconds) was removed because it only makes sense 
 Michael Stapelberg <michael+i3lock at stapelberg dot de>
 
 Jan-Erik Rediger <badboy at archlinux.us>
+
+Reihar <reihar at necronomicon dot fr>
