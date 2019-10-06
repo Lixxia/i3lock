@@ -74,6 +74,33 @@ verified or whether it is wrong).
 Display the given PNG image instead of a blank screen.
 
 .TP
+.BI \fB\-\-raw= format
+Read the image given by \-\-image as a raw image instead of PNG. The argument is the image's format
+as <width>x<height>:<pixfmt>. The supported pixel formats are:
+\'native', 'rgb', 'xrgb', 'rgbx', 'bgr', 'xbgr', and 'bgrx'.
+The "native" pixel format expects a pixel as a 32-bit (4-byte) integer in
+the machine's native endianness, with the upper 8 bits unused. Red, green and blue are stored in
+the remaining bits, in that order.
+
+.BR Example:
+.Vb 6
+\&	--raw=1920x1080:rgb
+.Ve
+
+.BR
+You can use ImageMagick’s
+.IR convert(1)
+program to feed raw images into i3lock:
+
+.BR
+.Vb 6
+\&	convert wallpaper.jpg RGB:- | i3lock --raw 3840x2160:rgb --image /dev/stdin
+.Ve
+
+This allows you to load a variety of image formats without i3lock having to
+support each one explicitly.
+
+.TP
 .BI \-c\  rrggbb \fR,\ \fB\-\-color= rrggbb
 Turn the screen into the given color instead of white. Color must be given in 3-byte
 format: rrggbb (i.e. ff0000 is red).
@@ -136,6 +163,9 @@ The \-I (-\-inactivity-timeout=seconds) was removed because it only makes sense 
 .SH SEE ALSO
 .IR xautolock(1)
 \- use i3lock as your screen saver
+
+.IR convert(1)
+\- feed a wide variety of image formats to i3lock
 
 .SH AUTHOR
 Michael Stapelberg <michael+i3lock at stapelberg dot de>
