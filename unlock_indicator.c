@@ -226,6 +226,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
             }
         }
 
+        set_auth_color('f');
         cairo_fill_preserve(ctx);
 
         /* Circle border */
