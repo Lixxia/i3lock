@@ -101,6 +101,19 @@ static xcb_visualtype_t *vistype;
 unlock_state_t unlock_state;
 auth_state_t auth_state;
 
+/* Displayed time text */
+static char timetext[100] = {'\0'};
+
+/* Get current time text. */
+void get_current_timetext(char *str, uint32_t size) {
+    time_t curtime = time(NULL);
+    struct tm *tm = localtime(&curtime);
+    if (use24hour)
+        strftime(str, size, TIME_FORMAT_24, tm);
+    else
+        strftime(str, size, TIME_FORMAT_12, tm);
+}
+
 /*
  * Draws global image with fill color onto a pixmap with the given
  * resolution and returns it.
@@ -234,14 +247,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         cairo_stroke(ctx);
 
         /* Display (centered) Time */
-        char *timetext = malloc(6);
-
-        time_t curtime = time(NULL);
-        struct tm *tm = localtime(&curtime);
-        if (use24hour)
-            strftime(timetext, 100, TIME_FORMAT_24, tm);
-        else
-            strftime(timetext, 100, TIME_FORMAT_12, tm);
+        get_current_timetext(timetext, sizeof(timetext));
 
         /* Text */
         set_auth_color('l');
@@ -258,8 +264,6 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         cairo_move_to(ctx, time_x, time_y);
         cairo_show_text(ctx, timetext);
         cairo_close_path(ctx);
-
-        free(timetext);
 
         if (auth_state == STATE_AUTH_WRONG && (modifier_string != NULL)) {
             cairo_text_extents_t extents;
@@ -370,20 +374,33 @@ void clear_indicator(void) {
 
 /* Periodic redraw for clock updates - taken from github.com/ravinrabbid/i3lock-clock */
 
+/* Schedule redraw even if time jumps. */
+static ev_tstamp time_redraw_reschedule_cb(ev_periodic *w, ev_tstamp now) {
+    char current[sizeof(timetext)] = {'\0'};
+    get_current_timetext(current, sizeof(current));
+    if (strcmp(current, timetext) != 0) {
+        return now;
+    }
+
+    time_t t;
+    struct tm tm;
+    time(&t);
+    localtime_r(&t, &tm);
+    return now + (60 - tm.tm_sec);
+}
+
 static void time_redraw_cb(struct ev_loop *loop, ev_periodic *w, int revents) {
     redraw_screen();
 }
 
 void start_time_redraw_tick(struct ev_loop* main_loop) {
     if (time_redraw_tick) {
-        ev_periodic_set(time_redraw_tick, 1.0, 60., 0);
-        ev_periodic_again(main_loop, time_redraw_tick);
-    } else {
-        /* When there is no memory, we just don’t have a timeout. We cannot
-        * exit() here, since that would effectively unlock the screen. */
-        if (!(time_redraw_tick = calloc(sizeof(struct ev_periodic), 1)))
         return;
-        ev_periodic_init(time_redraw_tick,time_redraw_cb, 1.0, 60., 0);
-        ev_periodic_start(main_loop, time_redraw_tick);
     }
+    /* When there is no memory, we just don’t have a timeout. We cannot
+     * exit() here, since that would effectively unlock the screen. */
+    if (!(time_redraw_tick = calloc(sizeof(struct ev_periodic), 1)))
+        return;
+    ev_periodic_init(time_redraw_tick, time_redraw_cb, 0, 0, time_redraw_reschedule_cb);
+    ev_periodic_start(main_loop, time_redraw_tick);
 }
