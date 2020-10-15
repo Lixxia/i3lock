@@ -76,6 +76,9 @@ static xcb_cursor_t cursor;
 #ifndef __OpenBSD__
 static pam_handle_t *pam_handle;
 #endif
+/* The current position in the input buffer. Useful to determine if any
+ * characters of the password have already been entered or not. 
+ */
 int input_position = 0;
 /* Holds the password you enter (in UTF-8). */
 static char password[512];

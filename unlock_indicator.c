@@ -37,11 +37,6 @@ static struct ev_timer *time_redraw_tick;
 
 extern bool debug_mode;
 
-/* The current position in the input buffer. Useful to determine if any
- * characters of the password have already been entered or not. 
- */
-int input_position;
-
 /* The lock window. */
 extern xcb_window_t win;
 
