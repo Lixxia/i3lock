@@ -33,14 +33,9 @@
 /*******************************************************************************
  * Variables defined in i3lock.c.
  ******************************************************************************/
-static struct ev_periodic *time_redraw_tick;
+static struct ev_timer *time_redraw_tick;
 
 extern bool debug_mode;
-
-/* The current position in the input buffer. Useful to determine if any
- * characters of the password have already been entered or not. 
- */
-int input_position;
 
 /* The lock window. */
 extern xcb_window_t win;
@@ -234,14 +229,13 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         cairo_stroke(ctx);
 
         /* Display (centered) Time */
-        char *timetext = malloc(6);
-
+        char timetext[100] = {'\0'};
         time_t curtime = time(NULL);
         struct tm *tm = localtime(&curtime);
         if (use24hour)
-            strftime(timetext, 100, TIME_FORMAT_24, tm);
+            strftime(timetext, sizeof(timetext), TIME_FORMAT_24, tm);
         else
-            strftime(timetext, 100, TIME_FORMAT_12, tm);
+            strftime(timetext, sizeof(timetext), TIME_FORMAT_12, tm);
 
         /* Text */
         set_auth_color('l');
@@ -258,8 +252,6 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         cairo_move_to(ctx, time_x, time_y);
         cairo_show_text(ctx, timetext);
         cairo_close_path(ctx);
-
-        free(timetext);
 
         if (auth_state == STATE_AUTH_WRONG && (modifier_string != NULL)) {
             cairo_text_extents_t extents;
@@ -370,20 +362,19 @@ void clear_indicator(void) {
 
 /* Periodic redraw for clock updates - taken from github.com/ravinrabbid/i3lock-clock */
 
-static void time_redraw_cb(struct ev_loop *loop, ev_periodic *w, int revents) {
+static void time_redraw_cb(struct ev_loop *loop, ev_timer *w, int revents) {
     redraw_screen();
 }
 
 void start_time_redraw_tick(struct ev_loop* main_loop) {
     if (time_redraw_tick) {
-        ev_periodic_set(time_redraw_tick, 1.0, 60., 0);
-        ev_periodic_again(main_loop, time_redraw_tick);
-    } else {
-        /* When there is no memory, we just don’t have a timeout. We cannot
-        * exit() here, since that would effectively unlock the screen. */
-        if (!(time_redraw_tick = calloc(sizeof(struct ev_periodic), 1)))
         return;
-        ev_periodic_init(time_redraw_tick,time_redraw_cb, 1.0, 60., 0);
-        ev_periodic_start(main_loop, time_redraw_tick);
     }
+
+    /* When there is no memory, we just don’t have a timeout. We cannot
+     * exit() here, since that would effectively unlock the screen. */
+    if (!(time_redraw_tick = calloc(sizeof(struct ev_timer), 1)))
+        return;
+    ev_timer_init(time_redraw_tick, time_redraw_cb, 1.0, 1.0);
+    ev_timer_start(main_loop, time_redraw_tick);
 }
